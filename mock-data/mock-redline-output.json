@@ -1,0 +1,62 @@
+{
+  "party_name": "Acme Cloud Technologies Inc.",
+  "contract_type": "MSA",
+  "overall_risk_score": 78,
+  "risk_tier": "CRITICAL",
+  "approval_status": "DO_NOT_SIGN",
+  "executive_summary": "Acme Cloud Technologies presents a CRITICAL risk MSA scoring 78/100, driven primarily by a 30-day liability cap, unilateral indemnification, and perpetual data licence granted to the vendor. This contract must not be signed until a minimum of 6 must-change redlines are accepted, beginning with removal of the perpetual data licence and expansion of the liability cap to 12 months of contract value.",
+  "total_clauses_reviewed": 9,
+  "must_change_count": 4,
+  "should_change_count": 2,
+  "acceptable_count": 3,
+  "walk_away_clauses": [
+    "Perpetual irrevocable data licence granted to Vendor",
+    "Liability cap limited to 30 days fees",
+    "Cayman Islands governing law and arbitration"
+  ],
+  "redline_items": [
+    {
+      "clause_id": "C5",
+      "clause_type": "Liability Cap",
+      "risk_score": 92,
+      "priority": "MUST_CHANGE",
+      "original_text": "Vendor's total liability shall not exceed fees paid in the prior 30 days.",
+      "redlined_text": "Vendor's total cumulative liability shall not exceed the total fees paid by Customer in the twelve (12) months immediately preceding the event giving rise to the claim.",
+      "change_rationale": "30-day cap provides virtually no financial protection for enterprise. Industry standard is 12 months of contract value minimum.",
+      "walk_away": true
+    },
+    {
+      "clause_id": "C3",
+      "clause_type": "Data Privacy",
+      "risk_score": 89,
+      "priority": "MUST_CHANGE",
+      "original_text": "Customer grants Vendor a perpetual, irrevocable licence to use anonymised customer data for product improvement.",
+      "redlined_text": "Vendor may use aggregated, anonymised Customer data solely for service improvement purposes during the term of this Agreement. All such rights terminate upon expiry or termination of this Agreement.",
+      "change_rationale": "Perpetual irrevocable licence means Vendor retains data rights forever even after contract ends. This is a walk-away condition.",
+      "walk_away": true
+    },
+    {
+      "clause_id": "C6",
+      "clause_type": "Indemnification",
+      "risk_score": 81,
+      "priority": "MUST_CHANGE",
+      "original_text": "Customer shall indemnify Vendor against all third-party claims. Vendor indemnification limited to IP infringement only, capped at $10,000.",
+      "redlined_text": "Each party shall indemnify and defend the other against third-party claims arising from its own acts or omissions. In the event of a data breach caused by Vendor, Vendor shall indemnify Customer for all resulting costs, damages, and regulatory fines without cap limitation.",
+      "change_rationale": "Unilateral indemnification with $10,000 cap on vendor side creates massive asymmetric risk. Mutual indemnification is non-negotiable.",
+      "walk_away": false
+    },
+    {
+      "clause_id": "C7",
+      "clause_type": "Service Level Agreement",
+      "risk_score": 74,
+      "priority": "MUST_CHANGE",
+      "original_text": "Vendor targets 99.0% monthly uptime but provides no warranty. SLA credits limited to 5% of monthly fees.",
+      "redlined_text": "Vendor guarantees 99.9% monthly uptime measured on a rolling 30-day basis excluding scheduled maintenance windows with minimum 48 hours notice. Service credits for failure to meet SLA shall be 10% of monthly fees per 0.1% below the guaranteed threshold, up to 50% of monthly fees.",
+      "change_rationale": "99.0% allows 7.3 hours downtime per month with virtually no financial consequence. 99.9% is industry standard with meaningful credit structure.",
+      "walk_away": false
+    }
+  ],
+  "negotiation_summary": "Take an aggressive negotiation stance on this contract — four clauses represent walk-away or must-change conditions that significantly favour the vendor. Begin negotiations by presenting the perpetual data licence removal as a non-negotiable condition before discussing any commercial terms.",
+  "clauses_acceptable": ["Payment Terms", "Auto-Renewal Notice", "Force Majeure"],
+  "estimated_post_negotiation_score": 24
+}
