@@ -1,0 +1,46 @@
+MASTER SERVICE AGREEMENT
+Between: Acme Cloud Technologies Inc. ("Vendor") and Customer ("Enterprise")
+
+SECTION 1 — SERVICES
+Vendor shall provide cloud-based data processing services as described
+in applicable Order Forms. Vendor may modify or discontinue any feature
+with 7 days written notice.
+
+SECTION 2 — PAYMENT TERMS
+Customer shall pay all invoices within 15 days. Late payments accrue
+interest at 2% per month. Vendor may suspend services for any payment
+5 days overdue without liability. All fees are non-refundable.
+
+SECTION 3 — DATA & PRIVACY
+Customer grants Vendor a perpetual, irrevocable licence to use
+anonymised customer data for product improvement. Vendor may share data
+with third-party sub-processors at its discretion without prior notice.
+Customer data deleted within 365 days of contract termination.
+
+SECTION 4 — INTELLECTUAL PROPERTY
+All work product created by Vendor using Customer requirements shall
+be solely owned by Vendor. Customer receives a non-exclusive licence
+during the term only.
+
+SECTION 5 — LIABILITY
+Vendor's total liability shall not exceed fees paid in the prior
+30 days. Vendor not liable for any indirect or consequential damages.
+Customer waives all class action rights.
+
+SECTION 6 — INDEMNIFICATION
+Customer shall indemnify Vendor against all third-party claims.
+Vendor's indemnification limited to IP infringement only, capped at
+$10,000.
+
+SECTION 7 — SERVICE LEVELS
+Vendor targets 99.0% monthly uptime but provides no warranty.
+SLA credits limited to 5% of monthly fees. Planned maintenance
+excluded with no minimum notice.
+
+SECTION 8 — TERMINATION
+Auto-renews for 12-month terms unless cancelled with 90 days notice.
+Customer has 30 days post-termination to export data.
+
+SECTION 9 — GOVERNING LAW
+Governed by laws of the Cayman Islands. All disputes by binding
+arbitration in the Cayman Islands. Jury trial waived.
