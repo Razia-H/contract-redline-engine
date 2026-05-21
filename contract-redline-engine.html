@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Contract Redline Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#f7f5f0;
+  --surface:#ffffff;
+  --surface2:#f0ede6;
+  --border:#e2ddd6;
+  --border2:#c8c3ba;
+  --text:#1a1814;
+  --muted:#7a7570;
+  --accent:#1a1814;
+  --red:#c0392b;
+  --red-bg:#fdf0ee;
+  --red-border:#f5c6c2;
+  --amber:#b7620a;
+  --amber-bg:#fef7ec;
+  --green:#1e6b3c;
+  --green-bg:#eef7f2;
+  --blue:#1a4a8a;
+  --blue-bg:#eef3fb;
+  --critical:#c0392b;
+  --high:#c05c0a;
+  --medium:#8a7a0a;
+  --low:#1e6b3c;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh}
+.page{max-width:800px;margin:0 auto;padding:2.5rem 1.5rem}
+
+/* Header */
+.masthead{border-bottom:1px solid var(--border);padding-bottom:1.5rem;margin-bottom:2rem}
+.masthead-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.brand{font-family:'Instrument Serif',serif;font-size:28px;color:var(--text);line-height:1.1}
+.brand em{font-style:italic;color:var(--muted)}
+.version-tag{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);border:1px solid var(--border);padding:3px 8px;border-radius:3px;white-space:nowrap}
+.tagline{font-size:13px;color:var(--muted);font-family:'DM Mono',monospace}
+
+/* Panels */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.25rem 1.5rem;margin-bottom:1rem}
+.panel-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.panel-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Key input */
+.key-row{display:flex;gap:8px}
+.key-row input{flex:1;height:38px;padding:0 12px;font-size:13px;font-family:'DM Mono',monospace;border:1px solid var(--border2);border-radius:4px;background:var(--surface2);color:var(--text)}
+.key-row input:focus{outline:none;border-color:var(--accent)}
+.key-hint{font-size:11px;color:var(--muted);margin-top:6px;font-family:'DM Mono',monospace}
+
+/* Textarea */
+textarea{width:100%;padding:12px;font-size:13px;font-family:'DM Mono',monospace;border:1px solid var(--border2);border-radius:4px;background:var(--surface2);color:var(--text);resize:vertical;min-height:160px;line-height:1.7}
+textarea:focus{outline:none;border-color:var(--accent)}
+.textarea-footer{display:flex;justify-content:space-between;margin-top:6px}
+.char-count{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
+.demo-btn{font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;text-decoration:underline}
+.demo-btn:hover{color:var(--text)}
+
+/* Run button */
+.run-btn{width:100%;padding:14px;background:var(--text);color:var(--bg);border:none;border-radius:4px;font-size:14px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;letter-spacing:.02em;transition:opacity .15s}
+.run-btn:hover{opacity:.85}
+.run-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Pipeline */
+.pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin:1rem 0}
+.pipe-step{background:var(--surface);padding:12px 10px;text-align:center}
+.pipe-icon{font-size:18px;margin-bottom:4px;display:block}
+.pipe-name{font-size:11px;font-weight:600;color:var(--text);margin-bottom:3px}
+.pipe-status{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.pipe-step.running{background:var(--blue-bg)}
+.pipe-step.running .pipe-status{color:var(--blue)}
+.pipe-step.done{background:var(--green-bg)}
+.pipe-step.done .pipe-status{color:var(--green)}
+.pipe-step.err{background:var(--red-bg)}
+.pipe-step.err .pipe-status{color:var(--red)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;width:10px;height:10px;border:1.5px solid #c8d8f0;border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+
+/* Error */
+.err-box{background:var(--red-bg);border:1px solid var(--red-border);border-radius:4px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:12px;display:none;line-height:1.6;font-family:'DM Mono',monospace}
+
+/* Results */
+.results{display:none}
+
+/* Score header */
+.score-header{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.5rem;margin-bottom:1rem}
+.score-grid{display:grid;grid-template-columns:auto 1fr auto;gap:1.5rem;align-items:start}
+.score-left .score-num{font-family:'Instrument Serif',serif;font-size:72px;line-height:1;letter-spacing:-2px}
+.score-left .score-label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px}
+.score-middle{}
+.party-name{font-family:'Instrument Serif',serif;font-size:22px;margin-bottom:4px}
+.contract-type-tag{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);background:var(--surface2);padding:2px 8px;border-radius:3px;display:inline-block;margin-bottom:10px}
+.exec-summary{font-size:13px;line-height:1.75;color:var(--text)}
+.score-right{text-align:right}
+.tier-badge{font-size:11px;font-weight:700;padding:5px 10px;border-radius:3px;font-family:'DM Mono',monospace;display:inline-block;margin-bottom:8px}
+.tier-LOW{background:var(--green-bg);color:var(--green)}
+.tier-MEDIUM{background:var(--amber-bg);color:var(--amber)}
+.tier-HIGH{background:#fef2ec;color:var(--high)}
+.tier-CRITICAL{background:var(--red-bg);color:var(--red)}
+.status-tag{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;display:block}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center}
+.stat-num{font-family:'Instrument Serif',serif;font-size:28px;color:var(--text);margin-bottom:2px}
+.stat-label{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+
+/* Redline items */
+.redline-item{background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:8px;overflow:hidden}
+.ri-header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.ri-header:hover{background:var(--surface2)}
+.ri-id{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);width:24px}
+.ri-type{font-size:13px;font-weight:600;flex:1}
+.ri-score{font-size:12px;font-weight:600;font-family:'DM Mono',monospace;margin-right:6px}
+.priority-pill{font-size:9px;font-weight:700;padding:2px 7px;border-radius:2px;font-family:'DM Mono',monospace;letter-spacing:.06em}
+.MUST_CHANGE{background:#fdf0ee;color:var(--red)}
+.SHOULD_CHANGE{background:var(--amber-bg);color:var(--amber)}
+.walk-away-tag{font-size:9px;background:#c0392b;color:white;padding:2px 6px;border-radius:2px;font-family:'DM Mono',monospace}
+.chevron{font-size:12px;color:var(--muted);transition:transform .2s}
+.chevron.open{transform:rotate(180deg)}
+.ri-body{display:none;padding:14px}
+.ri-body.open{display:block}
+.clause-section{margin-bottom:12px}
+.clause-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:5px}
+.original-text{background:#fef9f9;border-left:3px solid var(--red-border);padding:10px 12px;font-size:12px;font-family:'DM Mono',monospace;line-height:1.7;color:var(--muted);border-radius:0 4px 4px 0}
+.redlined-text{background:#f0faf4;border-left:3px solid #a8dbb8;padding:10px 12px;font-size:12px;font-family:'DM Mono',monospace;line-height:1.7;color:#1a3d28;border-radius:0 4px 4px 0}
+.rationale-text{font-size:13px;color:var(--text);line-height:1.7}
+
+/* Walk away section */
+.walk-away-box{background:var(--red-bg);border:1px solid var(--red-border);border-radius:6px;padding:1rem 1.25rem;margin-bottom:1rem}
+.walk-away-box .walk-title{font-size:12px;font-weight:600;color:var(--red);margin-bottom:8px;font-family:'DM Mono',monospace;letter-spacing:.06em}
+.walk-item{font-size:13px;color:var(--red);padding:4px 0;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.walk-item::before{content:'✕';flex-shrink:0;font-weight:700}
+
+/* Export */
+.export-btn{width:100%;padding:11px;background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--text);font-size:13px;font-family:'Syne',sans-serif;font-weight:600;cursor:pointer;margin-top:1rem;transition:background .15s}
+.export-btn:hover{background:var(--surface2)}
+
+/* Divider */
+.section-head{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;margin:1.25rem 0 8px;display:flex;align-items:center;gap:8px}
+.section-head::after{content:'';flex:1;height:1px;background:var(--border)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div class="masthead-top">
+      <h1 class="brand">Contract <em>Redline</em> Engine</h1>
+      <span class="version-tag">v1.0 · Claude · OpenRouter</span>
+    </div>
+    <p class="tagline">// 4-agent AI analysis · clause extraction · risk scoring · negotiation strategy · redline drafting</p>
+  </div>
+
+  <!-- API Key -->
+  <div class="panel">
+    <div class="panel-label">API Configuration</div>
+    <div class="key-row">
+      <input type="password" id="api-key" placeholder="YOUR_OPENROUTER_KEY_HERE — paste sk-or-... key here"/>
+    </div>
+    <p class="key-hint">🔒 Key stays in your browser only — never transmitted except to OpenRouter API</p>
+  </div>
+
+  <!-- Contract Input -->
+  <div class="panel">
+    <div class="panel-label">Contract Document</div>
+    <textarea id="contract-text" placeholder="Paste your contract text here — MSA, NDA, SOW, DPA, or any enterprise agreement...&#10;&#10;The more complete the contract text, the more thorough the redline analysis."></textarea>
+    <div class="textarea-footer">
+      <span class="char-count" id="char-count">0 characters</span>
+      <button class="demo-btn" onclick="loadDemo()">Load demo contract →</button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="err-box" id="err-box"></div>
+
+  <!-- Run -->
+  <button class="run-btn" id="run-btn" onclick="runAnalysis()">
+    ▶ &nbsp; Run Contract Analysis
+  </button>
+
+  <!-- Pipeline -->
+  <div class="pipeline">
+    <div class="pipe-step" id="ps1">
+      <span class="pipe-icon">📄</span>
+      <div class="pipe-name">Clause Extractor</div>
+      <div class="pipe-status" id="pss1">idle</div>
+    </div>
+    <div class="pipe-step" id="ps2">
+      <span class="pipe-icon">⚖️</span>
+      <div class="pipe-name">Risk Classifier</div>
+      <div class="pipe-status" id="pss2">idle</div>
+    </div>
+    <div class="pipe-step" id="ps3">
+      <span class="pipe-icon">🤝</span>
+      <div class="pipe-name">Negotiation Strategist</div>
+      <div class="pipe-status" id="pss3">idle</div>
+    </div>
+    <div class="pipe-step" id="ps4">
+      <span class="pipe-icon">✍️</span>
+      <div class="pipe-name">Redline Writer</div>
+      <div class="pipe-status" id="pss4">idle</div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+
+    <!-- Score Header -->
+    <div class="score-header">
+      <div class="score-grid">
+        <div class="score-left">
+          <div class="score-num" id="r-score">—</div>
+          <div class="score-label">risk score</div>
+        </div>
+        <div class="score-middle">
+          <div class="party-name" id="r-party">—</div>
+          <span class="contract-type-tag" id="r-type">—</span>
+          <div class="exec-summary" id="r-summary"></div>
+        </div>
+        <div class="score-right">
+          <div class="tier-badge" id="r-tier"></div>
+          <span class="status-tag" id="r-status"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-num" id="s-total">—</div>
+        <div class="stat-label">clauses reviewed</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="s-must" style="color:var(--red)">—</div>
+        <div class="stat-label">must change</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="s-should" style="color:var(--amber)">—</div>
+        <div class="stat-label">should change</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="s-ok" style="color:var(--green)">—</div>
+        <div class="stat-label">acceptable</div>
+      </div>
+    </div>
+
+    <!-- Walk Away -->
+    <div class="walk-away-box" id="walk-away-box" style="display:none">
+      <div class="walk-title">⛔ WALK-AWAY CONDITIONS — Do not sign unless these are removed</div>
+      <div id="walk-away-list"></div>
+    </div>
+
+    <!-- Redline Items -->
+    <div class="section-head">Redline items — sorted by risk</div>
+    <div id="redline-list"></div>
+
+    <!-- Negotiation Summary -->
+    <div class="panel" style="margin-top:1rem">
+      <div class="panel-label">Negotiation strategy</div>
+      <p style="font-size:13px;line-height:1.75;color:var(--text)" id="r-neg-summary"></p>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">
+        Estimated risk score after accepting all redlines:
+        <strong style="color:var(--text)" id="r-post-score">—</strong>
+      </div>
+    </div>
+
+    <button class="export-btn" onclick="exportReport()">⬇ &nbsp; Export Full Redline Report (JSON)</button>
+
+  </div>
+
+</div>
+
+<script>
+const MODEL = 'anthropic/claude-haiku-4-5';
+const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+let lastResult = null;
+
+const AGENTS = {
+  extractor: `You are a Senior Contract Analyst. Extract and catalogue every legally significant clause from the provided contract. Assign each clause a unique ID (C1, C2...), identify its type, extract exact original text, and note its location. Clause types to identify: Liability Cap, Limitation of Liability, Indemnification, Mutual Indemnification, IP Ownership, IP Licence, Data Privacy, Data Processing, GDPR Obligations, Confidentiality, Non-Disclosure, Service Level Agreement, Uptime Guarantee, Payment Terms, Late Payment, Auto-Renewal, Termination for Cause, Termination for Convenience, Data Return, Data Deletion, Governing Law, Dispute Resolution, Force Majeure, Audit Rights, Sub-processor Disclosure, Warranty, Disclaimer of Warranties, Assignment, Change of Control. Add absent critical clauses to missing_critical_clauses. Respond ONLY with raw JSON, no markdown, no code fences, start with {:
+{"agent":"clause_extractor","party_name":"string","contract_type_confirmed":"MSA","total_clauses_found":0,"clauses":[{"clause_id":"C1","clause_type":"string","original_text":"string","location":"string","notes":"string"}],"missing_critical_clauses":["string"]}`,
+
+  classifier: `You are a Senior Legal Risk Analyst. Score each clause 0-100 for risk exposure to the contracting enterprise (higher = more risk). MINIMAL=0-19, LOW=20-39, MEDIUM=40-59, HIGH=60-79, CRITICAL=80-100. Missing critical clauses each add 15 to overall risk. Overall risk = weighted average of all clause scores. Flag walk-away clauses (score 80+). Be adversarial — assume vendor drafted this in their favour. Respond ONLY with raw JSON, no markdown, no code fences, start with {:
+{"agent":"risk_classifier","overall_contract_risk":0,"critical_clause_count":0,"high_clause_count":0,"walk_away_clauses":["clause_id"],"clause_risk_scores":[{"clause_id":"C1","clause_type":"string","risk_score":0,"risk_category":"CRITICAL","risk_reason":"string","risk_type":"FINANCIAL"}],"missing_clause_risk_additions":[{"missing_clause":"string","risk_added":15,"reason":"string"}]}`,
+
+  strategist: `You are a Principal Contract Negotiation Strategist. For every HIGH (60+) and CRITICAL (80+) risk clause, generate precise replacement legal language that protects the contracting enterprise. Principles: liability caps minimum 12 months contract value; indemnification must be mutual for data breach; SLA minimum 99.9% uptime; data return in machine-readable format within 30 days; termination for convenience max 30 days notice; audit rights must be preserved. Generate counter-proposals only for HIGH and CRITICAL clauses. Respond ONLY with raw JSON, no markdown, no code fences, start with {:
+{"agent":"negotiation_strategist","negotiation_stance":"AGGRESSIVE","counter_proposals":[{"clause_id":"C1","clause_type":"string","risk_score":0,"original_text":"string","proposed_replacement":"string","negotiation_rationale":"string","tactical_note":"string","priority":"MUST_CHANGE","walk_away":false}],"acceptable_clauses":["C2"],"negotiation_summary":"string","estimated_risk_reduction":"string"}`,
+
+  orchestrator: (j1,j2,j3) => `You are the Chief Contract Intelligence Orchestrator. Synthesise 3 agent outputs into a final executive redline assessment. Risk tiers: 0-24=LOW/APPROVED_TO_SIGN, 25-49=MEDIUM/APPROVED_WITH_REDLINES, 50-74=HIGH/REQUIRES_NEGOTIATION, 75-100=CRITICAL/DO_NOT_SIGN. Executive summary = exactly 2 sentences: sentence 1 states party name, contract type, risk score, tier, most dangerous clause; sentence 2 states recommended action, must-change count, top condition for approval. Sort redline_items by risk_score descending. Respond ONLY with raw JSON, no markdown, no code fences, start with {:
+{"party_name":"string","contract_type":"MSA","overall_risk_score":0,"risk_tier":"HIGH","approval_status":"REQUIRES_NEGOTIATION","executive_summary":"string","total_clauses_reviewed":0,"must_change_count":0,"should_change_count":0,"acceptable_count":0,"walk_away_clauses":["string"],"redline_items":[{"clause_id":"C1","clause_type":"string","risk_score":0,"priority":"MUST_CHANGE","original_text":"string","redlined_text":"string","change_rationale":"string","walk_away":false}],"negotiation_summary":"string","clauses_acceptable":["string"],"estimated_post_negotiation_score":0}
+
+CLAUSE EXTRACTOR OUTPUT: ${JSON.stringify(j1)}
+RISK CLASSIFIER OUTPUT: ${JSON.stringify(j2)}
+NEGOTIATION STRATEGIST OUTPUT: ${JSON.stringify(j3)}`
+};
+
+function loadDemo() {
+  document.getElementById('contract-text').value = `MASTER SERVICE AGREEMENT
+Between: Acme Cloud Technologies Inc. ("Vendor") and Customer ("Enterprise")
+
+SECTION 1 — SERVICES
+Vendor shall provide cloud-based data processing and analytics services as described in applicable Order Forms. Vendor may modify or discontinue any feature with 7 days written notice.
+
+SECTION 2 — PAYMENT TERMS
+Customer shall pay all invoices within 15 days of receipt. Late payments accrue interest at 2% per month. Vendor may suspend services for any payment 5 days overdue without liability. All fees are non-refundable.
+
+SECTION 3 — DATA & PRIVACY
+Customer grants Vendor a perpetual, irrevocable licence to use anonymised customer data for product improvement and benchmarking. Vendor may share data with third-party sub-processors at its discretion without prior notice to Customer. Customer data will be deleted within 365 days of contract termination.
+
+SECTION 4 — INTELLECTUAL PROPERTY
+All work product, customisations, and improvements created by Vendor using Customer data or requirements shall be solely owned by Vendor. Customer receives a non-exclusive licence to use deliverables during the term only.
+
+SECTION 5 — LIABILITY
+Vendor's total cumulative liability shall not exceed the fees paid in the prior 30 days. Vendor shall not be liable for any indirect, consequential, or punitive damages under any circumstances. Customer waives all rights to class action claims against Vendor.
+
+SECTION 6 — INDEMNIFICATION
+Customer shall indemnify and defend Vendor against all third-party claims arising from Customer's use of the services. Vendor's indemnification obligations are limited to direct IP infringement claims only, capped at $10,000.
+
+SECTION 7 — SERVICE LEVELS
+Vendor targets 99.0% monthly uptime but provides no warranty of availability. Service credits for downtime are limited to 5% of monthly fees and constitute Customer's sole remedy. Planned maintenance windows are excluded from uptime calculations with no minimum notice required.
+
+SECTION 8 — TERM & TERMINATION
+This Agreement renews automatically for successive 12-month terms unless cancelled with 90 days written notice before renewal. Vendor may terminate immediately for any material breach. Upon termination, Customer has 30 days to export data; thereafter Vendor may delete all Customer data with no obligation to retain or return.
+
+SECTION 9 — GOVERNING LAW
+This Agreement is governed by the laws of the Cayman Islands. All disputes shall be resolved by binding arbitration in the Cayman Islands. Each party waives the right to a jury trial.
+
+SECTION 10 — CONFIDENTIALITY
+Customer agrees to keep all Vendor technology, pricing, and processes confidential for 5 years. Vendor confidentiality obligations are limited to 1 year and exclude any information Vendor determines to be non-proprietary at its sole discretion.`;
+  updateCount();
+}
+
+function updateCount() {
+  const t = document.getElementById('contract-text').value;
+  document.getElementById('char-count').textContent = t.length.toLocaleString() + ' characters';
+}
+document.getElementById('contract-text').addEventListener('input', updateCount);
+
+function setStep(n, cls, label) {
+  document.getElementById('ps'+n).className = 'pipe-step ' + cls;
+  document.getElementById('pss'+n).innerHTML = cls==='running'
+    ? '<span class="spin"></span> ' + label : label;
+}
+
+function showErr(msg) {
+  const b = document.getElementById('err-box');
+  b.textContent = '⚠ ' + msg;
+  b.style.display = 'block';
+}
+function hideErr() { document.getElementById('err-box').style.display = 'none'; }
+
+async function callClaude(systemPrompt, userContent, key) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + key,
+      'HTTP-Referer': 'https://contract-redline-engine.local',
+      'X-Title': 'Contract Redline Engine'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 3000,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent }
+      ]
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'API error ' + res.status + ' — check your OpenRouter key');
+  }
+  const data = await res.json();
+  return (data.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
+}
+
+function parseJ(str) {
+  try { return JSON.parse(str); }
+  catch {
+    const m = str.match(/\{[\s\S]*\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch {} }
+    throw new Error('Agent returned invalid JSON — click Run Again to retry');
+  }
+}
+
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+async function runAnalysis() {
+  hideErr();
+  const key = document.getElementById('api-key').value.trim();
+  const txt = document.getElementById('contract-text').value.trim();
+
+  if (!key || key === 'YOUR_OPENROUTER_KEY_HERE') {
+    showErr('Please paste your OpenRouter API key (sk-or-...) in the API Configuration field above.');
+    return;
+  }
+  if (txt.length < 100) {
+    showErr('Please paste more contract text. Try the "Load demo contract" button.');
+    return;
+  }
+
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳  Analysing contract — please wait ~75 seconds...';
+  document.getElementById('results').style.display = 'none';
+  [1,2,3,4].forEach(n => setStep(n, '', 'idle'));
+
+  const contractMsg = 'Analyse this contract:\n\n' + txt;
+
+  try {
+    setStep(1, 'running', 'extracting clauses...');
+    const r1 = await callClaude(AGENTS.extractor, contractMsg, key);
+    const j1 = parseJ(r1);
+    setStep(1, 'done', j1.total_clauses_found + ' clauses found');
+
+    await delay(15000);
+
+    const riskMsg = 'Score the risk of each clause in this contract:\n\n' + txt + '\n\nClauses identified:\n' + JSON.stringify(j1.clauses);
+    setStep(2, 'running', 'scoring risk...');
+    const r2 = await callClaude(AGENTS.classifier, riskMsg, key);
+    const j2 = parseJ(r2);
+    setStep(2, 'done', 'risk score: ' + j2.overall_contract_risk);
+
+    await delay(15000);
+
+    const stratMsg = 'Generate counter-proposals for high-risk clauses:\n\n' + txt + '\n\nRisk scores:\n' + JSON.stringify(j2.clause_risk_scores);
+    setStep(3, 'running', 'building strategy...');
+    const r3 = await callClaude(AGENTS.strategist, stratMsg, key);
+    const j3 = parseJ(r3);
+    setStep(3, 'done', j3.counter_proposals?.length + ' proposals');
+
+    await delay(15000);
+
+    setStep(4, 'running', 'writing redlines...');
+    const r4 = await callClaude(AGENTS.orchestrator(j1,j2,j3), 'Synthesise into final redline assessment.', key);
+    const j4 = parseJ(r4);
+    setStep(4, 'done', 'complete ✓');
+
+    lastResult = { agents: { extractor: j1, classifier: j2, strategist: j3 }, synthesis: j4 };
+    renderResults(j4);
+
+  } catch(e) {
+    showErr(e.message || 'Unknown error — please try again');
+    [1,2,3,4].forEach(n => {
+      if (document.getElementById('ps'+n).className.includes('running'))
+        setStep(n, 'err', 'error');
+    });
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▶  Run Again';
+  }
+}
+
+function scoreColor(s) {
+  if (s >= 80) return 'var(--critical)';
+  if (s >= 60) return 'var(--high)';
+  if (s >= 40) return 'var(--medium)';
+  return 'var(--low)';
+}
+
+function renderResults(d) {
+  const score = Math.round(d.overall_risk_score || 0);
+  const tier = (d.risk_tier || 'MEDIUM').toUpperCase();
+
+  document.getElementById('r-score').textContent = score;
+  document.getElementById('r-score').style.color = scoreColor(score);
+  document.getElementById('r-party').textContent = d.party_name || '—';
+  document.getElementById('r-type').textContent = d.contract_type || '—';
+  document.getElementById('r-summary').textContent = d.executive_summary || '';
+
+  const tb = document.getElementById('r-tier');
+  tb.textContent = tier;
+  tb.className = 'tier-badge tier-' + tier;
+  document.getElementById('r-status').textContent = (d.approval_status||'').replace(/_/g,' ');
+
+  document.getElementById('s-total').textContent = d.total_clauses_reviewed || 0;
+  document.getElementById('s-must').textContent = d.must_change_count || 0;
+  document.getElementById('s-should').textContent = d.should_change_count || 0;
+  document.getElementById('s-ok').textContent = d.acceptable_count || 0;
+
+  const walkList = d.walk_away_clauses || [];
+  if (walkList.length) {
+    const wb = document.getElementById('walk-away-box');
+    wb.style.display = 'block';
+    document.getElementById('walk-away-list').innerHTML = walkList
+      .map(w => `<div class="walk-item">${w}</div>`).join('');
+  }
+
+  const rl = document.getElementById('redline-list');
+  rl.innerHTML = '';
+  const items = d.redline_items || [];
+  items.forEach((item, i) => {
+    const id = 'ri-' + i;
+    rl.innerHTML += `
+      <div class="redline-item">
+        <div class="ri-header" onclick="toggleRI('${id}')">
+          <span class="ri-id">${item.clause_id||'—'}</span>
+          <span class="ri-type">${item.clause_type||'—'}</span>
+          <span class="ri-score" style="color:${scoreColor(item.risk_score||0)}">${item.risk_score||0}</span>
+          <span class="priority-pill ${item.priority||'SHOULD_CHANGE'}">${(item.priority||'').replace(/_/g,' ')}</span>
+          ${item.walk_away ? '<span class="walk-away-tag">WALK AWAY</span>' : ''}
+          <span class="chevron" id="chev-${id}">▾</span>
+        </div>
+        <div class="ri-body" id="${id}">
+          <div class="clause-section">
+            <div class="clause-label">Original text</div>
+            <div class="original-text">${item.original_text||'—'}</div>
+          </div>
+          <div class="clause-section">
+            <div class="clause-label">Proposed redline</div>
+            <div class="redlined-text">${item.redlined_text||'—'}</div>
+          </div>
+          <div class="clause-section">
+            <div class="clause-label">Rationale</div>
+            <div class="rationale-text">${item.change_rationale||'—'}</div>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  document.getElementById('r-neg-summary').textContent = d.negotiation_summary || '';
+  document.getElementById('r-post-score').textContent = d.estimated_post_negotiation_score ?? '—';
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleRI(id) {
+  const body = document.getElementById(id);
+  const chev = document.getElementById('chev-' + id);
+  const open = body.classList.contains('open');
+  document.querySelectorAll('.ri-body').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.chevron').forEach(el => el.classList.remove('open'));
+  if (!open) { body.classList.add('open'); chev.classList.add('open'); }
+}
+
+function exportReport() {
+  if (!lastResult) return;
+  const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `contract-redline-report-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
